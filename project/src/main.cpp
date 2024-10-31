@@ -47,8 +47,15 @@ int main(int argc, char* args[])
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
 
-	const auto pScene = new TestScene_W3();
+	//Reference Scene
+	const auto pScene = new Scene_W4_ReferenceScene();
 	pScene->Initialize();
+
+	//Bunny Scene
+	const auto pSceneBunny = new Scene_W4_BunnyScene();
+	pSceneBunny->Initialize();
+
+	bool SwitchToBunnyScene{false};
 
 	//Start loop
 	pTimer->Start();
@@ -79,15 +86,20 @@ int main(int argc, char* args[])
 					pRenderer->ToggleShadow();
 				else if (e.key.keysym.scancode == SDL_SCANCODE_F3)
 					pRenderer->CycleLightingMode();
+				else if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+					SwitchToBunnyScene = !SwitchToBunnyScene;
 				break;
 			}
 		}
 
 		//--------- Update ---------
-		pScene->Update(pTimer);
+		if(SwitchToBunnyScene) pSceneBunny->Update(pTimer);
+		else pScene->Update(pTimer);
 
 		//--------- Render ---------
-		pRenderer->Render(pScene);
+		
+		if (SwitchToBunnyScene) pRenderer->Render(pSceneBunny);
+		else pRenderer->Render(pScene);
 
 		//--------- Timer ---------
 		pTimer->Update();
@@ -112,6 +124,7 @@ int main(int argc, char* args[])
 
 	//Shutdown "framework"
 	delete pScene;
+	delete pSceneBunny;
 	delete pRenderer;
 	delete pTimer;
 

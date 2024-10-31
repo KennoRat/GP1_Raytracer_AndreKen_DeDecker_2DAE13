@@ -53,54 +53,51 @@ void Renderer::Render(Scene* pScene) const
 
 			pScene->GetClosestHit(viewRay, closestHit);
 
-			if(closestHit.didHit)
+			if (closestHit.didHit)
 			{
-				const float occluderShadow{ 0.6 };
+				const float occluderShadow{ 0.5 };
 				Ray shadowRay{};
-				shadowRay.origin =  closestHit.origin;
+				shadowRay.origin = closestHit.origin;
 				shadowRay.min = 0.00001f;
 
 				float lambertsLaw{};
 
-				for(const Light& lightsIdx: lights)
+				for (const Light& lightsIdx : lights)
 				{
 					bool occluder{ false };
 					shadowRay.max = LightUtils::GetDirectionToLight(lightsIdx, shadowRay.origin).Magnitude();
 					shadowRay.direction = LightUtils::GetDirectionToLight(lightsIdx, shadowRay.origin) / shadowRay.max;
 
-					
-					if (pScene->DoesHit(shadowRay))
+
+					if (pScene->DoesHit(shadowRay) && m_ShadowsEnabled)
 					{
 						occluder = true;
 					}
-
-					lambertsLaw = Vector3::Dot(closestHit.normal, shadowRay.direction);
-					if (lambertsLaw > 0) 
+					else
 					{
-						switch (m_CurrentLightMode)
+						lambertsLaw = Vector3::Dot(closestHit.normal, shadowRay.direction);
+						if (lambertsLaw > 0)
 						{
-						case dae::Renderer::LightingMode::ObservedArea:
-							finalColor += ColorRGB{ lambertsLaw,  lambertsLaw , lambertsLaw };
-							break;
-						case dae::Renderer::LightingMode::Radiance:
-							finalColor += LightUtils::GetRadiance(lightsIdx, shadowRay.origin);
-							break;
-						case dae::Renderer::LightingMode::BRDF:
-							finalColor += materials[closestHit.materialIndex]->Shade(closestHit, -shadowRay.direction, rayDirection);
-							break;
-						case dae::Renderer::LightingMode::Combined:
-							finalColor += (LightUtils::GetRadiance(lightsIdx, shadowRay.origin) * materials[closestHit.materialIndex]->Shade(closestHit, -shadowRay.direction, rayDirection) * lambertsLaw);
-							break;
+							switch (m_CurrentLightMode)
+							{
+							case dae::Renderer::LightingMode::ObservedArea:
+								finalColor += ColorRGB{ lambertsLaw,  lambertsLaw , lambertsLaw };
+								break;
+							case dae::Renderer::LightingMode::Radiance:
+								finalColor += LightUtils::GetRadiance(lightsIdx, shadowRay.origin);
+								break;
+							case dae::Renderer::LightingMode::BRDF:
+								finalColor += materials[closestHit.materialIndex]->Shade(closestHit, -shadowRay.direction, rayDirection);
+								break;
+							case dae::Renderer::LightingMode::Combined:
+								finalColor += (LightUtils::GetRadiance(lightsIdx, shadowRay.origin) * materials[closestHit.materialIndex]->Shade(closestHit, -shadowRay.direction, rayDirection) * lambertsLaw);
+								break;
+							}
 						}
-					}
-					
-					
-					if (occluder && m_ShadowsEnabled)
-					{
-						finalColor = finalColor * occluderShadow;
-					}
+					}	
 				}
 			}
+			else finalColor = colors::Black;
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();

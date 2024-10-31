@@ -104,10 +104,10 @@ namespace dae {
 	Matrix Matrix::CreateTranslation(float x, float y, float z)
 	{
 		//todo W2
-		Vector4 xRow{ Vector4{1, 0, 0, x} };
-		Vector4 yRow{ Vector4{0, 1, 0, y} };
-		Vector4 zRow{ Vector4{0, 0, 1, z} };
-		Vector4 tRow{ Vector4{0, 0, 0, 1} };
+		Vector4 xRow{ Vector4{1, 0, 0, 0} };
+		Vector4 yRow{ Vector4{0, 1, 0, 0} };
+		Vector4 zRow{ Vector4{0, 0, 1, 0} };
+		Vector4 tRow{ Vector4{x, y, z, 1} };
 		
 		return { Matrix(xRow, yRow, zRow, tRow)};
 	}

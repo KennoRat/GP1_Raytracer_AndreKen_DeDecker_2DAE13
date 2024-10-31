@@ -61,6 +61,11 @@ namespace dae
 		TriangleMesh(const std::vector<Vector3>& _positions, const std::vector<int>& _indices, TriangleCullMode _cullMode) :
 			positions(_positions), indices(_indices), cullMode(_cullMode)
 		{
+			//Reserve
+			positions.reserve(32);
+			normals.reserve(32);
+			indices.reserve(32);
+
 			//Calculate Normals
 			CalculateNormals();
 
@@ -71,6 +76,12 @@ namespace dae
 		TriangleMesh(const std::vector<Vector3>& _positions, const std::vector<int>& _indices, const std::vector<Vector3>& _normals, TriangleCullMode _cullMode) :
 			positions(_positions), indices(_indices), normals(_normals), cullMode(_cullMode)
 		{
+			//Reserve
+			positions.reserve(32);
+			normals.reserve(32);
+			indices.reserve(32);
+
+			//Update Transforms
 			UpdateTransforms();
 		}
 
@@ -124,20 +135,44 @@ namespace dae
 
 		void CalculateNormals()
 		{
-			throw std::runtime_error("Not Implemented Yet");
+			for(int triangleIdx{}; triangleIdx < (indices.size() / 3); ++triangleIdx)
+			{
+				int v0{ indices[triangleIdx * 3]	 };
+				int v1{ indices[triangleIdx * 3 + 1] };
+				int v2{ indices[triangleIdx * 3 + 2] };
+				Vector3 a{ positions[v1] - positions[v0]};
+
+				Vector3 b{ positions[v2] - positions[v0] };
+				Vector3 n{ Vector3::Cross(a, b).Vector3::Normalized()};
+				normals.push_back(n);
+			}
+			
 		}
 
 		void UpdateTransforms()
 		{
-			throw std::runtime_error("Not Implemented Yet");
 			//Calculate Final Transform 
 			//const auto finalTransform = ...
+			transformedPositions.clear();
+			transformedNormals.clear();
+
+			const auto finalTransform{translationTransform * (rotationTransform * scaleTransform)};
 
 			//Transform Positions (positions > transformedPositions)
 			//...
+			for (int positionIdx{}; positionIdx < positions.size(); ++positionIdx)
+			{
+				transformedPositions.push_back(finalTransform.TransformPoint(positions[positionIdx]));
+			}
 
 			//Transform Normals (normals > transformedNormals)
 			//...
+			for (int normalIdx{}; normalIdx < normals.size(); ++normalIdx)
+			{
+				transformedNormals.push_back(finalTransform.TransformVector(normals[normalIdx]));
+			}
+
+
 		}
 	};
 #pragma endregion

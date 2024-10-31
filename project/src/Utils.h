@@ -66,15 +66,15 @@ namespace dae
 			float denominator{Vector3::Dot(ray.direction, plane.normal)};
 			float t{ numerator / denominator };
 
-			if( t >= ray.min && t < ray.max)
+			if( t > ray.min && t < ray.max)
 			{
 				if(ignoreHitRecord == false)
 				{
 					hitRecord.t = t;
 					hitRecord.didHit = true;
 					hitRecord.origin = ray.origin + (t * ray.direction);
-					if(Vector3::Dot(hitRecord.origin, ray.origin) >= 0) hitRecord.normal = plane.normal;
-					else hitRecord.normal = -plane.normal;
+					/*if(Vector3::Dot(hitRecord.origin, ray.origin) >= 0) hitRecord.normal = plane.normal;
+					else hitRecord.normal = -plane.normal;*/
 					hitRecord.normal = plane.normal;
 					hitRecord.materialIndex = plane.materialIndex;
 				}
@@ -95,8 +95,59 @@ namespace dae
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W5
-			throw std::runtime_error("Not Implemented Yet");
-			return false;
+			// Clockwise Edge
+			Vector3 n{triangle.normal};
+			/*if (n == Vector3{ 0, 0, 0 })
+			{
+				Vector3 a{ triangle.v1 - triangle.v0 };
+
+				Vector3 b{ triangle.v2 - triangle.v0 };
+				n = Vector3::Cross(a, b).Vector3::Normalized();
+			}*/
+			
+			float nDotv{ Vector3::Dot(ray.direction, n) };
+
+			if (nDotv == 0) return false;
+
+			if(ignoreHitRecord == false)
+			{
+				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && nDotv > 0) return false;
+				else if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && nDotv < 0) return false;
+			}
+			else
+			{
+				if (triangle.cullMode == TriangleCullMode::BackFaceCulling && nDotv < 0) return false;
+				else if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && nDotv > 0) return false;
+			}
+
+			float numerator{ Vector3::Dot((triangle.v0 - ray.origin), n) };
+			float denominator{ Vector3::Dot(ray.direction, n) };
+			float t{ numerator / denominator };
+
+			if (t < ray.min || t > ray.max) return false;
+
+			Vector3 p{ ray.origin + (ray.direction * t) };
+			Vector3 triangleNode[3]{triangle.v0 , triangle.v1, triangle.v2};
+
+			for(int edgeIdx{}; edgeIdx < 3; ++edgeIdx)
+			{
+				Vector3 e{ triangleNode[edgeIdx + 1] - triangleNode[edgeIdx]};
+				if (edgeIdx == 2) e = triangleNode[0] - triangleNode[2];
+				Vector3 pV{ p - triangleNode[edgeIdx] };
+
+				if (Vector3::Dot(Vector3::Cross(e, pV), n) < 0) return false;
+			}
+
+			if (ignoreHitRecord == false)
+			{
+				hitRecord.t = t;
+				hitRecord.didHit = true;
+				hitRecord.origin = ray.origin + (t * ray.direction);
+				hitRecord.normal = n;
+				hitRecord.materialIndex = triangle.materialIndex;
+			}
+
+			return true;
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
@@ -109,7 +160,31 @@ namespace dae
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W5
-			throw std::runtime_error("Not Implemented Yet");
+
+			HitRecord smallestHit{};
+			smallestHit.t = hitRecord.t;
+
+			for(int triangleIdx{}; triangleIdx < (mesh.indices.size() / 3); ++triangleIdx)
+			{
+				Triangle polygon{ mesh.transformedPositions[mesh.indices[triangleIdx * 3]],
+				mesh.transformedPositions[mesh.indices[triangleIdx * 3 + 1]],
+				mesh.transformedPositions[mesh.indices[triangleIdx * 3 + 2]],
+				mesh.transformedNormals[triangleIdx]};
+				polygon.cullMode = mesh.cullMode;
+				polygon.materialIndex = mesh.materialIndex;
+
+				HitTest_Triangle(polygon, ray, hitRecord);
+
+				if (hitRecord.t < smallestHit.t)
+				{
+					smallestHit = hitRecord;
+				}
+			}
+
+
+			hitRecord = smallestHit;
+
+			if(hitRecord.didHit) return true;
 			return false;
 		}
 
