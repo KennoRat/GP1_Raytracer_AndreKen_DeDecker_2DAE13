@@ -388,16 +388,19 @@ namespace dae {
 		m_Mesh[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		m_Mesh[0]->AppendTriangle(baseTriangle, true);
 		m_Mesh[0]->Translate({ -1.75f, 4.5f, 0.f });
+		m_Mesh[0]->UpdateAABB();
 		m_Mesh[0]->UpdateTransforms();
 
 		m_Mesh[1] = AddTriangleMesh(TriangleCullMode::FrontFaceCulling, matLambert_White);
 		m_Mesh[1]->AppendTriangle(baseTriangle, true);
 		m_Mesh[1]->Translate({ 0.f, 4.5f, 0.f });
+		m_Mesh[1]->UpdateAABB();
 		m_Mesh[1]->UpdateTransforms();
 
 		m_Mesh[2] = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
 		m_Mesh[2]->AppendTriangle(baseTriangle, true);
 		m_Mesh[2]->Translate({ 1.75, 4.5f, 0.f });
+		m_Mesh[2]->UpdateAABB();
 		m_Mesh[2]->UpdateTransforms();
 
 
@@ -442,7 +445,7 @@ namespace dae {
 
 
 		//Bunny Mesh
-		pMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		pMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		Utils::ParseOBJ("Resources/lowpoly_bunny.obj",
 			pMesh->positions,
 			pMesh->normals,
@@ -452,6 +455,7 @@ namespace dae {
 
 		pMesh->Scale({ 2.f, 2.f, 2.f });
 
+		pMesh->UpdateAABB();
 		pMesh->UpdateTransforms();
 
 
@@ -459,6 +463,17 @@ namespace dae {
 		AddPointLight({ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, 0.61f, 0.45f });
 		AddPointLight({ -2.5f, 5.f, -5.f }, 70.f, ColorRGB{ 1.f, 0.8f, 0.45f });
 		AddPointLight({ 2.5f, 2.5f, -5.f }, 50.f, ColorRGB{ 0.34f, 0.47f, 0.68f });
+
+	}
+
+	void Scene_W4_BunnyScene::Update(Timer* pTimer)
+	{
+		Scene::Update(pTimer);
+
+		const auto yawAngle = ((cos(pTimer->GetTotal()) + 1.f) * M_PI) + M_PI;
+
+		pMesh->RotateY(yawAngle);
+		pMesh->UpdateTransforms();
 
 	}
 #pragma endregion

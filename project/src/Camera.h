@@ -66,6 +66,8 @@ namespace dae
 			if (pKeyboardState[SDL_SCANCODE_S]) origin -= forward * cameraSpeed * deltaTime;
 			if (pKeyboardState[SDL_SCANCODE_A]) origin -= right * cameraSpeed * deltaTime;
 			if (pKeyboardState[SDL_SCANCODE_D]) origin += right * cameraSpeed * deltaTime;
+			if (pKeyboardState[SDL_SCANCODE_E]) fovAngle -= cameraSpeed * deltaTime;
+			if (pKeyboardState[SDL_SCANCODE_R]) fovAngle += cameraSpeed * deltaTime;
 
 			//Mouse Input
 			int mouseX{}, mouseY{};
